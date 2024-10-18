@@ -196,15 +196,18 @@ if(HIP_FOUND AND Libva_FOUND)
   file(READ "/etc/os-release" OS_RELEASE)
   string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
 
-  # Set the dependent packages - TBD: To verify mesa-amdgpu-va-drivers should bring in all it's dependencies
-  set(ROCDECODE_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, mesa-amdgpu-va-drivers")
+  # Set the dependent packages
+  # libva-amdgpu is needed to use mesa-amdgpu-va-drivers, libva-amdgpu
+  # Debian splits the libva package into multiple packages (drm, wayland, x11)
+  set(ROCDECODE_DEBIAN_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, libva-amdgpu-drm2, libva-amdgpu-wayland2, libva-amdgpu-x11-2, mesa-amdgpu-va-drivers")
+  set(ROCDECODE_RPM_RUNTIME_PACKAGE_LIST  "rocm-hip-runtime, libva-amdgpu, mesa-amdgpu-va-drivers")
   # Set the dev dependent packages
-  set(ROCDECODE_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, libva-dev, pkg-config, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev")
+  set(ROCDECODE_DEBIAN_DEV_PACKAGE_LIST  "rocm-hip-runtime-dev, libva-amdgpu-dev, pkg-config, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev")
   if(UBUNTU_22_FOUND)
     set(ROCDECODE_DEBIAN_DEV_PACKAGE_LIST "${ROCDECODE_DEBIAN_DEV_PACKAGE_LIST}, libstdc++-12-dev")
   endif()
   # TBD - RPM packages need Fusion Packages - "ffmpeg, libavcodec-devel, libavformat-devel, libavutil-devel"
-  set(ROCDECODE_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, libva-devel, pkg-config")
+  set(ROCDECODE_RPM_DEV_PACKAGE_LIST  "rocm-hip-runtime-devel, libva-amdgpu-devel, pkg-config")
   
   # '%{?dist}' breaks manual builds on debian systems due to empty Provides
   execute_process(
@@ -225,26 +228,26 @@ if(HIP_FOUND AND Libva_FOUND)
   # Debian package
   set(CPACK_DEB_COMPONENT_INSTALL ON)
   set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
-  set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "rocm-core, ${ROCDECODE_RUNTIME_PACKAGE_LIST}")
+  set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "rocm-core, ${ROCDECODE_DEBIAN_RUNTIME_PACKAGE_LIST}")
   set(CPACK_DEBIAN_DEV_PACKAGE_NAME "${PROJECT_NAME}-dev")
   set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS 
   "rocm-core, ${PROJECT_NAME}, ${ROCDECODE_DEBIAN_DEV_PACKAGE_LIST}")
   # Debian package - specific variable for ASAN
   set(CPACK_DEBIAN_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
-  set(CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS "rocm-core-asan, ${ROCDECODE_RUNTIME_PACKAGE_LIST}" )
+  set(CPACK_DEBIAN_ASAN_PACKAGE_DEPENDS "rocm-core-asan, ${ROCDECODE_DEBIAN_RUNTIME_PACKAGE_LIST}" )
   # Debian package - Test
   set(CPACK_DEBIAN_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
   set(CPACK_DEBIAN_TEST_PACKAGE_DEPENDS "rocm-core, ${CPACK_DEBIAN_DEV_PACKAGE_NAME}" )
   # RPM package
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_RPM_RUNTIME_PACKAGE_NAME "${PROJECT_NAME}")
-  set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "rocm-core, ${ROCDECODE_RUNTIME_PACKAGE_LIST}")
+  set(CPACK_RPM_RUNTIME_PACKAGE_REQUIRES "rocm-core, ${ROCDECODE_RPM_RUNTIME_PACKAGE_LIST}")
   set(CPACK_RPM_DEV_PACKAGE_NAME "${PROJECT_NAME}-devel")
   set(CPACK_RPM_DEV_PACKAGE_REQUIRES "rocm-core, ${PROJECT_NAME}, ${ROCDECODE_RPM_DEV_PACKAGE_LIST}")
   set(CPACK_RPM_PACKAGE_LICENSE "MIT" )
   # RPM package specific variable for ASAN
   set(CPACK_RPM_ASAN_PACKAGE_NAME "${PROJECT_NAME}-asan" )
-  set(CPACK_RPM_ASAN_PACKAGE_REQUIRES "rocm-core-asan, ${ROCDECODE_RUNTIME_PACKAGE_LIST}" )
+  set(CPACK_RPM_ASAN_PACKAGE_REQUIRES "rocm-core-asan, ${ROCDECODE_RPM_RUNTIME_PACKAGE_LIST}" )
   # RPM package specific variable for Test
   set(CPACK_RPM_TEST_PACKAGE_NAME "${PROJECT_NAME}-test" )
   set(CPACK_RPM_TEST_PACKAGE_REQUIRES "rocm-core, ${CPACK_RPM_DEV_PACKAGE_NAME}" )
